@@ -5,6 +5,10 @@
 
     require_once(__DIR__ . '/../vendor/autoload.php');
 
+    $dotenv = new Framework\Config\Dotenv();
+    $dotenv->loadFromFile(__DIR__ . '/../.env');
+    $dotenv->setGlobals();
+
     $request = Framework\Web\Request::fromGlobals();
     $response = Framework\Web\Router::pass($request);
 
