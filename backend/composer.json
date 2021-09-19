@@ -18,5 +18,14 @@
     "minimum-stability": "stable",
     "require-dev": {
         "vkcom/noverify": "^0.5.1"
+    },
+    "config": {
+        "platform": {
+            "php": "7.4"
+        }
+    },
+    "require": {
+        "ext-pdo": "*",
+        "ext-json": "*"
     }
 }
