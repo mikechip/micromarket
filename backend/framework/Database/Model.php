@@ -19,7 +19,6 @@ class Model
 
     /**
      * Название таблицы. Перезаписывается в дочерних классах-моделях
-     * @return string
      */
     public static function getTableName(): string
     {
@@ -29,13 +28,11 @@ class Model
     /**
      * Вспомогательная функция для безопасной передачи названия таблицы в запрос.
      * PDO не позволяет сделать это из коробки.
-     * @param string $query
-     * @return string
      */
     protected static function bindTableName(string $query): string
     {
         return str_replace(':table',
-            str_replace(['\'', '"'], '`', self::getTableName()), $query
+            str_replace(['\'', '"'], '`', static::getTableName()), $query
         );
     }
 
@@ -43,18 +40,48 @@ class Model
     {
         $pdo = PDO::i();
         $query = $pdo->prepare(
-            self::bindTableName('SELECT * FROM :table WHERE `id` = :id')
+            static::bindTableName('SELECT * FROM :table WHERE `id` = :id')
         );
 
-        $result = $query->execute([
+        $query->execute([
             'id' => $id
         ]);
+        $result = $query->fetch();
 
         if(!$result) {
             return null;
         }
 
-        return new Model($id, $query->fetch());
+        return new Model($id, $result);
+    }
+
+    /**
+     * Вставить строку на основе массива в базу данных
+     */
+    public static function insert(array $data): ?int
+    {
+        $query_parts = [];
+        $pdo_params = [];
+
+        foreach($data as $key => $value) {
+            $query_parts[] = '`' . $key . '`=:' . $key;
+            $pdo_params[ trim($key) ] = $value;
+        }
+
+        $pdo = PDO::i();
+        $query = $pdo->prepare(
+            static::bindTableName('INSERT INTO :table SET '
+                . implode(', ', $query_parts)
+            )
+        );
+
+        $created = $query->execute($pdo_params);
+
+        if($created) {
+           return $pdo->lastInsertId();
+        } else {
+            return null;
+        }
     }
 
     public function __get(string $key)
