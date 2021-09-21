@@ -2,6 +2,8 @@
 
 namespace Framework\Database;
 
+use Generator;
+
 /**
  * Слой абстракции над базой данных, предоставляющий удобный
  * доступ к строкам в таблице в виде мутабельных классов
@@ -34,6 +36,21 @@ class Model
         return str_replace(':table',
             str_replace(['\'', '"'], '`', static::getTableName()), $query
         );
+    }
+
+    /**
+     * @return Generator
+     */
+    public static function getAll(): Generator
+    {
+        $pdo = PDO::i();
+        $query = $pdo->query(
+            static::bindTableName('SELECT * FROM :table')
+        );
+
+        while($row = $query->fetch()) {
+            yield new Model($row['id'], $row);
+        }
     }
 
     public static function getById(int $id): ?Model
