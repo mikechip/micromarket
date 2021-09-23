@@ -27,7 +27,12 @@ class Request
      */
     public static function fromGlobals(): self
     {
-        return new static($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_TIME_FLOAT'], $_GET, $_POST);
+        $uri = $_SERVER['REQUEST_URI'];
+        if(strpos($uri, '?') !== false) {
+            $uri = strstr($uri, '?', true);
+        }
+
+        return new static($uri, $_SERVER['REQUEST_TIME_FLOAT'], $_GET, $_POST);
     }
 
     public function __construct(string $uri, float $start_time = 0, ?array $get = null, ?array $post = null)
