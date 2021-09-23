@@ -30,18 +30,6 @@ final class Catalog extends EndpointController
     }
 
     // @todo
-    public function actionItem(Request $request): Response
-    {
-        return $this->apiResponse($request, ['item' => [
-            'id' => 1,
-            'title' => 'Dummy Item',
-            'desc' => 'Lorem ipsum dolor sit amet',
-            'price' => rand(0, 2500),
-            'image_url' => '/logo512.png'
-        ]]);
-    }
-
-    // @todo
     public function actionEdit(Request $request): Response
     {
         return $this->apiResponse($request, ['result' => false]);
@@ -53,9 +41,18 @@ final class Catalog extends EndpointController
         return $this->apiResponse($request, ['result' => null, 'item_id' => 0]);
     }
 
-    // @todo
     public function actionDelete(Request $request): Response
     {
-        return $this->apiResponse($request, ['result' => null]);
+        $id = (int)$request->getQuery()->id;
+        if($id <= 0) {
+            return $this->apiError($request, 400, 'Item id is not passed');
+        }
+
+        $item = Item::getById($id);
+        if(!$item) {
+            return $this->apiError($request, 404, 'Item not found');
+        }
+
+        return $this->apiResponse($request, ['result' => $item->remove()]);
     }
 }

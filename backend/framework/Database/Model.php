@@ -69,7 +69,7 @@ class Model
             return null;
         }
 
-        return new Model($id, $result);
+        return new static($id, $result);
     }
 
     /**
@@ -104,5 +104,15 @@ class Model
     public function __get(string $key)
     {
         return $this->row[$key] ?? '';
+    }
+
+    public function remove(): bool
+    {
+        $pdo = PDO::i();
+        $query = $pdo->prepare(
+            static::bindTableName('DELETE FROM :table WHERE id = :id')
+        );
+
+        return $query->execute(['id' => $this->id]);
     }
 }
