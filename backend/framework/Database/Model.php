@@ -38,15 +38,26 @@ class Model
         );
     }
 
-    /**
-     * @return Generator
-     */
-    public static function getAll(): Generator
+    public static function count(): int
     {
         $pdo = PDO::i();
         $query = $pdo->query(
-            static::bindTableName('SELECT * FROM :table')
+            static::bindTableName('SELECT COUNT(*) FROM :table')
         );
+        $query->execute();
+        return $query->fetchColumn();
+    }
+
+    public static function getAll(int $offset = 0, int $limit = 100): Generator
+    {
+        $pdo = PDO::i();
+        $query = $pdo->prepare(
+            static::bindTableName('SELECT * FROM :table WHERE `id` > :offset LIMIT 0,:limit')
+        );
+
+        $query->bindValue('limit', $limit, \PDO::PARAM_INT);
+        $query->bindValue('offset', $offset, \PDO::PARAM_INT);
+        $query->execute();
 
         while($row = $query->fetch()) {
             yield new Model($row['id'], $row);

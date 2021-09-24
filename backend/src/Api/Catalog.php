@@ -3,6 +3,7 @@
 namespace App\Api;
 
 use App\Model\Item;
+use App\Validator\Item as Validator;
 use Framework\Rest\EndpointController;
 use Framework\Web\Request;
 use Framework\Web\Response;
@@ -12,10 +13,13 @@ final class Catalog extends EndpointController
     public function actionList(Request $request): Response
     {
         $result = [];
-        $count = 0;
+        $count = Item::count();
+        $last_id = -1;
 
         foreach(Item::getAll() as $i) {
-            $count++;
+            if($i->id > $last_id) {
+                $last_id = $i->id;
+            }
 
             $result[] = [
                 'id' => $i->id,
@@ -26,7 +30,9 @@ final class Catalog extends EndpointController
             ];
         }
 
-        return $this->apiResponse($request, ['count' => $count, 'list' => $result]);
+        return $this->apiResponse($request, [
+            'count' => $count, 'list' => $result, 'offset' => $last_id
+        ]);
     }
 
     // @todo
@@ -43,7 +49,7 @@ final class Catalog extends EndpointController
 
     public function actionDelete(Request $request): Response
     {
-        $id = (int)$request->getQuery()->id;
+        $id = (int)$request->getPost()->id;
         if($id <= 0) {
             return $this->apiError($request, 400, 'Item id is not passed');
         }

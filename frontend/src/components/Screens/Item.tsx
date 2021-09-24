@@ -1,31 +1,27 @@
-import {useRouteMatch} from "react-router";
 import {Alert, Badge, Button, Card, Col, Figure, Row} from "react-bootstrap";
-import {useEffect, useState} from "react";
-import {query} from "../../lib/api";
+import {useState} from "react";
 import {IItem} from "../../lib/entities";
+import {query} from "../../lib/api";
 
-// @todo
-export const Item = () => {
+export const Item = (props) => {
     const [error, setError] = useState('');
-    const [item, setItem] = useState<IItem>({id: 0, desc: "...", image_url: "/logo192.png", price: 0, title: "..."});
-    const match = useRouteMatch('/item/:id');
-    const params: any = match?.params;
+    const item: IItem = props?.data;
 
-    useEffect(() => {
-        if(!params || !("id" in params)) {
-            setError('Неверный ID');
-            return;
+    const deselect = () => {
+        if(props?.deselect) {
+            props.deselect();
         }
+    };
 
-        const id: number = params.id;
-        query('catalog/item', {id: id}).then((r) => {
-            if(r.error) {
+    const deleteItem = () => {
+        query('catalog/delete', {id: item.id}).then((r) => {
+            if(r.error?.text) {
                 setError(r.error.text);
-            } else if(r.response && "item" in r.response) {
-                setItem(r.response.item);
+            } else if(r.response && ("result" in r.response)) {
+                deselect();
             }
         });
-    }, []);
+    };
 
     return <>
         {(error?.length > 0) && <Alert variant={"danger"}>
@@ -58,7 +54,7 @@ export const Item = () => {
                 </Card.Body>
                 <Card.Footer>
                     <Button variant="primary" disabled>Редактировать</Button>{' '}
-                    <Button variant="danger" disabled>Удалить</Button>
+                    <Button variant="danger" onClick={() => deleteItem()}>Удалить</Button>
                 </Card.Footer>
             </Card>
         </Col>}

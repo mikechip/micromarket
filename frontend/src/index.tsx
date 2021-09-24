@@ -3,15 +3,15 @@ import ReactDOM from 'react-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import App from './App';
 import {RecoilRoot} from "recoil";
-import {HashRouter} from "react-router-dom";
+import RecoilOutside from "recoil-outside"
 
 ReactDOM.render(
   <React.StrictMode>
       <RecoilRoot>
-          <HashRouter>
-            <App />
-          </HashRouter>
+          <RecoilOutside/>
+          <App />
       </RecoilRoot>
   </React.StrictMode>,
   document.getElementById('root')
 );
+    
