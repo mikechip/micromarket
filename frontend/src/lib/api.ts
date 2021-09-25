@@ -1,10 +1,10 @@
 import axios from "axios";
-import {IResponseCreate, IResponseItem, IResponseItemsList} from "./entities"
+import {IResponseCreate, IResponseItem, IResponseItemsList, IResponseOperationResult} from "./entities"
 import {promiseSetRecoil} from "recoil-outside"
 import {LastRequestState, RequestTimeState} from "./store";
 
 interface IApiResponse {
-    response: IResponseItemsList | IResponseItem | IResponseCreate | object | null
+    response: IResponseItemsList | IResponseItem | IResponseCreate | IResponseOperationResult | object | null
     request_time: number
     error: IApiError | null
 }

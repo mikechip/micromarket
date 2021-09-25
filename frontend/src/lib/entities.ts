@@ -7,6 +7,10 @@ export interface IResponseItem {
     item: IItem
 }
 
+export interface IResponseOperationResult {
+    result: boolean
+}
+
 export interface IItem {
     id: number
     name: string

@@ -10,8 +10,11 @@ use Generator;
  */
 class Model
 {
+    const ID_FIELD = 'id';
+
     protected int $id;
     protected array $row;
+    protected array $changed = [];
 
     public function __construct(int $id, array $row = null)
     {
@@ -50,8 +53,7 @@ class Model
 
     public static function getAll(int $offset = 0, int $limit = 100, string $order_by = null, bool $asc = false): Generator
     {
-        // @todo Экранировать ORDER BY
-        $query_str = static::bindTableName('SELECT * FROM :table WHERE `id` > :offset');
+        $query_str = static::bindTableName('SELECT * FROM :table WHERE '.static::ID_FIELD.' > :offset');
         if($order_by) {
             $query_str .= ' ORDER BY `' . $order_by . '` ' . ($asc ? 'ASC' : 'DESC');
         }
@@ -68,7 +70,7 @@ class Model
         $query->execute();
 
         while($row = $query->fetch()) {
-            yield new Model($row['id'], $row);
+            yield new Model($row[static::ID_FIELD], $row);
         }
     }
 
@@ -76,11 +78,11 @@ class Model
     {
         $pdo = PDO::i();
         $query = $pdo->prepare(
-            static::bindTableName('SELECT * FROM :table WHERE `id` = :id')
+            static::bindTableName('SELECT * FROM :table WHERE `'.static::ID_FIELD.'` = :id')
         );
 
         $query->execute([
-            'id' => $id
+            static::ID_FIELD => $id
         ]);
         $result = $query->fetch();
 
@@ -92,9 +94,9 @@ class Model
     }
 
     /**
-     * Вставить строку на основе массива в базу данных
+     * Хелпер для генерации значений выражения SET в (например, для insert и update запросов)
      */
-    public static function insert(array $data): ?int
+    protected static function generateSet(array $data): array
     {
         $query_parts = [];
         $pdo_params = [];
@@ -104,14 +106,27 @@ class Model
             $pdo_params[ trim($key) ] = $value;
         }
 
+        return [
+            implode(', ', $query_parts),
+            $pdo_params
+        ];
+    }
+
+    /**
+     * Вставить строку на основе массива в базу данных
+     */
+    public static function insert(array $data): ?int
+    {
+        $set = self::generateSet($data);
+
         $pdo = PDO::i();
         $query = $pdo->prepare(
             static::bindTableName('INSERT INTO :table SET '
-                . implode(', ', $query_parts)
+                . $set[0]
             )
         );
 
-        $created = $query->execute($pdo_params);
+        $created = $query->execute($set[1]);
 
         if($created) {
            return $pdo->lastInsertId();
@@ -120,16 +135,45 @@ class Model
         }
     }
 
+    public function save(): bool
+    {
+        $data = [];
+        foreach($this->changed as $key) {
+            if(isset($this->row[$key])) {
+                $data[$key] = $this->row[$key];
+            }
+        }
+
+        $set = static::generateSet($data);
+
+        $pdo = PDO::i();
+        $query = $pdo->prepare(
+            static::bindTableName('UPDATE :table SET '
+                . $set[0] . ' WHERE `'.static::ID_FIELD.'` = :id'
+            )
+        );
+
+        return $query->execute(
+            array_merge($set[1], [static::ID_FIELD => $this->id])
+        );
+    }
+
     public function __get(string $key)
     {
         return $this->row[$key] ?? '';
+    }
+
+    public function __set(string $key, $value)
+    {
+        $this->row[$key] = $value;
+        $this->changed[] = $key;
     }
 
     public function remove(): bool
     {
         $pdo = PDO::i();
         $query = $pdo->prepare(
-            static::bindTableName('DELETE FROM :table WHERE id = :id')
+            static::bindTableName('DELETE FROM :table WHERE `'.self::ID_FIELD.'` = :id')
         );
 
         return $query->execute(['id' => $this->id]);

@@ -4,6 +4,7 @@ namespace App\Api;
 
 use App\Model\Item;
 use App\Validator\Item as Validator;
+use Exception;
 use Framework\Rest\EndpointController;
 use Framework\Web\Request;
 use Framework\Web\Response;
@@ -42,10 +43,35 @@ final class Catalog extends EndpointController
     // @todo
     public function actionEdit(Request $request): Response
     {
-        return $this->apiResponse($request, ['result' => false]);
+        $id = (int)$request->getPost()->id;
+        if($id <= 0) {
+            return $this->apiError($request, 400, 'Не передан ID');
+        }
+
+        $item = Item::getById($id);
+        if(!$item) {
+            return $this->apiError($request, 404, 'Товар не найден');
+        }
+
+        $new_data = (new Validator())->sanitize(
+            (array)$request->getPost()
+        );
+
+        if(count($new_data)) {
+            foreach ($new_data as $key => $value) {
+                $item->{$key} = $value;
+            }
+
+            $result = $item->save();
+        } else {
+            $result = false;
+        }
+
+        return $this->apiResponse($request, [
+            'result' => $result
+        ]);
     }
 
-    // @todo
     public function actionCreate(Request $request): Response
     {
         $data = (new Validator())->sanitize(
