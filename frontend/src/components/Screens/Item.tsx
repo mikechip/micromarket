@@ -34,12 +34,12 @@ export const Item = (props) => {
                     <Figure>
                         <Figure.Image
                             width={'80%'}
-                            alt={item.title} src={item.image_url}
+                            alt={item.name} src={item.image_url}
                         />
                     </Figure>
                 </Col>
                 <Col>
-                    <h3>{item.title}</h3>
+                    <h3>{item.name}</h3>
                     <h5>
                         Идентификатор: <Badge bg="secondary">{item.id}</Badge>
                     </h5>

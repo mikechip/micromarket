@@ -9,8 +9,13 @@ export interface IResponseItem {
 
 export interface IItem {
     id: number
-    title: string
+    name: string
     desc: string
     price: number
     image_url: string
+}
+
+export interface IResponseCreate {
+    item_id: number
+    result: boolean
 }

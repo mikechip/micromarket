@@ -21,7 +21,9 @@ class Item
             switch($key) {
                 case 'name':
                     $value = preg_replace('/[^a-zA-Zа-яА-ЯёЁ0-9()\- ]+/', '', $value);
-                    $result['name'] = mb_substr($value, 0, self::MAX_TITLE_LENGTH);
+                    if(mb_strlen($value) > 0) {
+                        $result['name'] = mb_substr($value, 0, self::MAX_TITLE_LENGTH);
+                    }
                     break;
 
                 case 'desc':
