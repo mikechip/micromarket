@@ -16,7 +16,11 @@ final class Catalog extends EndpointController
         $count = Item::count();
         $last_id = -1;
 
-        foreach(Item::getAll() as $i) {
+        $post = $request->getPost();
+        $order = ((int)$post->order) === 2 ? 'price' : 'id';
+        $order_dir = (bool)$post->order_dir;
+
+        foreach(Item::getAll(0, 100, $order, $order_dir) as $i) {
             if($i->id > $last_id) {
                 $last_id = $i->id;
             }

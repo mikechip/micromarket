@@ -48,11 +48,19 @@ class Model
         return $query->fetchColumn();
     }
 
-    public static function getAll(int $offset = 0, int $limit = 100): Generator
+    public static function getAll(int $offset = 0, int $limit = 100, string $order_by = null, bool $asc = false): Generator
     {
+        // @todo Экранировать ORDER BY
+        $query_str = static::bindTableName('SELECT * FROM :table WHERE `id` > :offset');
+        if($order_by) {
+            $query_str .= ' ORDER BY `' . $order_by . '` ' . ($asc ? 'ASC' : 'DESC');
+        }
+
+        $query_str .= ' LIMIT 0,:limit';
+
         $pdo = PDO::i();
         $query = $pdo->prepare(
-            static::bindTableName('SELECT * FROM :table WHERE `id` > :offset LIMIT 0,:limit')
+            $query_str
         );
 
         $query->bindValue('limit', $limit, \PDO::PARAM_INT);

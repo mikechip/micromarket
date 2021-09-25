@@ -1,4 +1,4 @@
-import {Alert, Card, Col, ListGroup, Row, Spinner} from "react-bootstrap";
+import {Alert, Button, Card, Col, ListGroup, Row, Spinner} from "react-bootstrap";
 import React, {useEffect, useState} from "react";
 import {query} from "../../lib/api";
 import {IItem, IResponseItemsList} from "../../lib/entities";
@@ -8,14 +8,17 @@ export const ListItems = (props) => {
     const [loading, setLoading] = useState(true);
     const [items, setItems] = useState<IResponseItemsList>({count: 0, list: []});
 
+    const [orderBy, setOrderBy] = useState(1);
+    const [orderDir, setOrderDir] = useState(true);
+
     useEffect(() => {
-        query('catalog/list', {}).then((r) => {
+        query('catalog/list', {order: Number(orderBy), order_dir: Number(orderDir)}).then((r) => {
             if(r.response && ("list" in r.response)) {
                 setItems(r.response);
                 setLoading(false);
             }
         });
-    }, []);
+    }, [orderBy, orderDir]);
 
     const openItem = (data: IItem) => {
         if(props?.open) {
@@ -53,10 +56,17 @@ export const ListItems = (props) => {
                     Список товаров
                 </ListGroup.Item>
                 <ListGroup.Item action disabled>
-                    Сортировка
-                </ListGroup.Item>
-                <ListGroup.Item action disabled>
                     Добавить товар
+                </ListGroup.Item>
+                <ListGroup.Item>
+                    <Button variant="outline-primary" onClick={() => setOrderBy(orderBy === 1 ? 2 : 1)}>
+                        Сортировка по
+                        {orderBy === 1 && ' id'}
+                        {orderBy === 2 && ' цене'}
+                    </Button>{' '}
+                    <Button variant="outline-primary" onClick={() => setOrderDir(!orderDir)}>
+                        {orderDir ? '▲' : '▼'}
+                    </Button>
                 </ListGroup.Item>
             </ListGroup>
         </Col>
