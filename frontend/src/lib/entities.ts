@@ -1,6 +1,7 @@
 export interface IResponseItemsList {
     count: number
     list: IItem[]
+    pages: number
 }
 
 export interface IResponseItem {

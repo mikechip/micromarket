@@ -53,12 +53,13 @@ class Model
 
     public static function getAll(int $offset = 0, int $limit = 100, string $order_by = null, bool $asc = false): Generator
     {
-        $query_str = static::bindTableName('SELECT * FROM :table WHERE '.static::ID_FIELD.' > :offset');
-        if($order_by) {
-            $query_str .= ' ORDER BY `' . $order_by . '` ' . ($asc ? 'ASC' : 'DESC');
-        }
+        $query_str = static::bindTableName('SELECT * FROM :table');
 
-        $query_str .= ' LIMIT 0,:limit';
+        // Определяет, что мы сортируем результаты исключительно по id
+        // В таком случае применяется более быстрый алгоритм постраничного вывода
+        $order_query = 'ORDER BY `' . $order_by . '` ' . ($asc ? 'ASC' : 'DESC');
+
+        $query_str .= ' ' . $order_query . ' LIMIT :offset,:limit';
 
         $pdo = PDO::i();
         $query = $pdo->prepare(
@@ -177,5 +178,10 @@ class Model
         );
 
         return $query->execute(['id' => $this->id]);
+    }
+
+    public function getRow(): array
+    {
+        return $this->row;
     }
 }

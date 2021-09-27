@@ -3,6 +3,7 @@
 namespace App\Api;
 
 use App\Model\Item;
+use App\Service\Item as ItemService;
 use App\Validator\Item as Validator;
 use Exception;
 use Framework\Rest\EndpointController;
@@ -14,33 +15,37 @@ final class Catalog extends EndpointController
     public function actionList(Request $request): Response
     {
         $result = [];
-        $count = Item::count();
         $last_id = -1;
 
         $post = $request->getPost();
-        $order = ((int)$post->order) === 2 ? 'price' : 'id';
+        $page = $post->page ? (int)$post->page : 1;
+        $order = ($post->order && (int)$post->order === 2) ? 'price' : 'id';
         $order_dir = (bool)$post->order_dir;
 
-        foreach(Item::getAll(0, 100, $order, $order_dir) as $i) {
+        $items = new ItemService();
+
+        foreach($items->getPage($page, 100, $order, $order_dir) as $i) {
             if($i->id > $last_id) {
                 $last_id = $i->id;
             }
 
             $result[] = [
-                'id' => $i->id,
+                'id' => (int)$i->id,
                 'name' => $i->name ?? 'Без названия',
                 'desc' => $i->desc ?? '',
-                'price' => $i->price ?? 0,
+                'price' => (int)($i->price ?? 0),
                 'image_url' => $i->image_url ?? ''
             ];
         }
 
         return $this->apiResponse($request, [
-            'count' => $count, 'list' => $result, 'offset' => $last_id
+            'count' => $items->getItemsCount(),
+            'pages' => $items->getPagesCount(),
+            'list' => $result,
+            'offset' => $last_id
         ]);
     }
 
-    // @todo
     public function actionEdit(Request $request): Response
     {
         $id = (int)$request->getPost()->id;
@@ -83,7 +88,8 @@ final class Catalog extends EndpointController
         }
 
         try {
-            $insert_id = Item::insert($data);
+            $items = new ItemService();
+            $insert_id = $items->insert($data);
         } catch (Exception $e) {
             error_log($e->getMessage());
             return $this->apiError($request, 500, 'Ошибка создания товара');
@@ -101,11 +107,12 @@ final class Catalog extends EndpointController
             return $this->apiError($request, 400, 'Не передан ID');
         }
 
-        $item = Item::getById($id);
-        if(!$item) {
+        $items = new ItemService();
+        $tryRemove = $items->remove($id);
+        if(!$tryRemove) {
             return $this->apiError($request, 404, 'Товар не найден');
         }
 
-        return $this->apiResponse($request, ['result' => $item->remove()]);
+        return $this->apiResponse($request, ['result' => true]);
     }
 }
